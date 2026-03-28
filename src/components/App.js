@@ -1,6 +1,9 @@
 import React, { useRef, useState } from "react";
 
-const items = Array.from({ length: 1000 }, (_, i) => `Item ${i + 1}`);
+const items = Array.from({ length: 1000 }, (_, i) => ({
+  title: `Item ${i + 1}`,
+  desc: "Lorem ipsum dolor sit amet."
+}));
 
 function App() {
   const containerRef = useRef(null);
@@ -36,9 +39,10 @@ function App() {
           <div style={{ transform: `translateY(${startIndex * itemHeight}px)` }}>
             {visibleItems.map((item, index) => (
   <div key={startIndex + index} style={{ height: itemHeight, padding: "10px" }}>
-                {item}
-              </div>
-            ))}
+    <strong>{item.title}</strong>
+    <p>{item.desc}</p>
+  </div>
+))}
           </div>
         </div>
       </div>
