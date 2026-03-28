@@ -1,93 +1,68 @@
-import React, { useRef, useState } from "react";
+import React, { useRef } from "react";
+import { useEffect } from "react";
+import { useState } from "react";
 
-function App() {
-  const containerRef = useRef(null);
+function getItems() {
+  const items = [];
+  for (let index = 1; index <= 1000; index++) {
+    items.push({
+      id: index,
+      description: `Description for item ${index}`,
+    });
+  }
+  return items;
+}
+const offset = 15;
+export default function InfiniteScroll() {
+  const [allItems] = useState(() => getItems());
+  const visibleItems = useRef(offset);
+  const [itemsToShow, setItemsToShow] = useState(null);
+  const scrollContainerRef = useRef(null);
+  useEffect(() => {
+    setItemsToShow(() => allItems.slice(0, offset));
+  }, [allItems]);
 
-  // ✅ items in state (IMPORTANT for load more)
-  const [items, setItems] = useState(
-    Array.from({ length: 50 }, (_, i) => ({
-      title: `Item ${i + 1}`,
-      desc: "Lorem ipsum dolor sit amet."
-    }))
-  );
+  function loadMoreItems() {
+    const newItems = allItems.slice(visibleItems.current, visibleItems.current + offset);
+    visibleItems.current = visibleItems.current + offset;
+    setItemsToShow((prev) => [...prev, ...newItems]);
+  }
 
-  const [scrollTop, setScrollTop] = useState(0);
-  const [loading, setLoading] = useState(false);
-
-  const itemHeight = 60; // ✅ added
-  const containerHeight = 500;
-
-  // ✅ Load more items
-  const loadMoreItems = () => {
-    if (loading) return;
-
-    setLoading(true);
-
-    setTimeout(() => {
-      setItems((prev) => [
-        ...prev,
-        ...Array.from({ length: 20 }, (_, i) => ({
-          title: `Item ${prev.length + i + 1}`,
-          desc: "Lorem ipsum dolor sit amet."
-        }))
-      ]);
-      setLoading(false);
-    }, 500);
-  };
-
-  // ✅ Scroll handler with 90% logic
-  const handleScroll = () => {
-    const scrollTopVal = containerRef.current.scrollTop;
-    const scrollHeight = containerRef.current.scrollHeight;
-    const clientHeight = containerRef.current.clientHeight;
-
-    setScrollTop(scrollTopVal);
-
-    // 🔥 90% scroll trigger
-    if (scrollTopVal + clientHeight >= scrollHeight * 0.9) {
+  function onContainerScroll(event) {
+    // console.log(event);
+    const percentageScrolled =
+      ((scrollContainerRef.current.clientHeight + scrollContainerRef.current.scrollTop) /
+        scrollContainerRef.current.scrollHeight) *
+      100;
+    if (percentageScrolled > 90) {
       loadMoreItems();
     }
-  };
+  }
 
-  // ✅ Virtual scroll logic
-  const startIndex = Math.floor(scrollTop / itemHeight);
-  const visibleCount = Math.ceil(containerHeight / itemHeight);
-  const endIndex = startIndex + visibleCount;
+  useEffect(() => {
+    scrollContainerRef.current?.addEventListener("scroll", onContainerScroll);
 
-  const visibleItems = items.slice(startIndex, endIndex);
+    return () => {
+      scrollContainerRef.current?.removeEventListener("scroll", onContainerScroll);
+    };
+  }, []);
 
   return (
-    <div>
-      <h2>Visible Scroll Rendering</h2>
-
-      <div
-        ref={containerRef}
-        onScroll={handleScroll}
-        style={{
-          height: "500px",
-          overflowY: "auto",
-          border: "1px solid black"
-        }}
-      >
-        <div style={{ height: items.length * itemHeight }}>
-          <div style={{ transform: `translateY(${startIndex * itemHeight}px)` }}>
-            {visibleItems.map((item, index) => (
-              <div
-                key={startIndex + index}
-                style={{ height: itemHeight, padding: "10px" }}
-              >
-                <strong>{item.title}</strong>
-                <p>{item.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* ✅ optional loader */}
-        {loading && <p style={{ textAlign: "center" }}>Loading...</p>}
-      </div>
-    </div>
+    <ul
+      ref={scrollContainerRef}
+      style={{
+        height: 500,
+        width: 300,
+        border: "1px solid",
+        overflow: "auto",
+        display: "flex",
+        flexDirection: "column",
+        gap: "16px",
+      }}
+    >
+      {itemsToShow?.map((item) => (
+        <li key={item.id}>{item.description}</li>
+      ))}
+    </ul>
   );
 }
-
-export default App;
