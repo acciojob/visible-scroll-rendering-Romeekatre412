@@ -1,68 +1,77 @@
-import React, { useRef } from "react";
-import { useEffect } from "react";
-import { useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
+import "./App.css";
 
-function getItems() {
-  const items = [];
-  for (let index = 1; index <= 1000; index++) {
-    items.push({
-      id: index,
-      description: `Description for item ${index}`,
-    });
-  }
-  return items;
-}
-const offset = 15;
-export default function InfiniteScroll() {
-  const [allItems] = useState(() => getItems());
-  const visibleItems = useRef(offset);
-  const [itemsToShow, setItemsToShow] = useState(null);
-  const scrollContainerRef = useRef(null);
-  useEffect(() => {
-    setItemsToShow(() => allItems.slice(0, offset));
-  }, [allItems]);
+const ITEM_HEIGHT = 60;
+const CONTAINER_HEIGHT = 500;
+const TOTAL_ITEMS = 1000;
 
-  function loadMoreItems() {
-    const newItems = allItems.slice(visibleItems.current, visibleItems.current + offset);
-    visibleItems.current = visibleItems.current + offset;
-    setItemsToShow((prev) => [...prev, ...newItems]);
-  }
+const items = Array.from({ length: TOTAL_ITEMS }, (_, i) => ({
+  id: i,
+  text: `Item ${i + 1}`,
+}));
 
-  function onContainerScroll(event) {
-    // console.log(event);
-    const percentageScrolled =
-      ((scrollContainerRef.current.clientHeight + scrollContainerRef.current.scrollTop) /
-        scrollContainerRef.current.scrollHeight) *
-      100;
-    if (percentageScrolled > 90) {
-      loadMoreItems();
-    }
-  }
+function App() {
+  const containerRef = useRef(null);
+  const [scrollTop, setScrollTop] = useState(0);
+
+  const visibleCount = Math.ceil(CONTAINER_HEIGHT / ITEM_HEIGHT);
+
+  const startIndex = Math.floor(scrollTop / ITEM_HEIGHT);
+  const endIndex = startIndex + visibleCount;
+
+  const visibleItems = items.slice(startIndex, endIndex);
+
+  const handleScroll = () => {
+    setScrollTop(containerRef.current.scrollTop);
+  };
 
   useEffect(() => {
-    scrollContainerRef.current?.addEventListener("scroll", onContainerScroll);
-
-    return () => {
-      scrollContainerRef.current?.removeEventListener("scroll", onContainerScroll);
-    };
+    const node = containerRef.current;
+    node.addEventListener("scroll", handleScroll);
+    return () => node.removeEventListener("scroll", handleScroll);
   }, []);
 
   return (
-    <ul
-      ref={scrollContainerRef}
+    <div
+      ref={containerRef}
       style={{
-        height: 500,
-        width: 300,
-        border: "1px solid",
-        overflow: "auto",
-        display: "flex",
-        flexDirection: "column",
-        gap: "16px",
+        height: "500px",
+        overflowY: "auto",
+        border: "1px solid black",
       }}
     >
-      {itemsToShow?.map((item) => (
-        <li key={item.id}>{item.description}</li>
-      ))}
-    </ul>
+      {/* IMPORTANT: relative container */}
+      <div
+        style={{
+          height: TOTAL_ITEMS * ITEM_HEIGHT,
+          position: "relative",
+        }}
+      >
+        {visibleItems.map((item, index) => {
+          const actualIndex = startIndex + index;
+
+          return (
+            <div
+              key={item.id}
+              style={{
+                position: "absolute",
+                top: actualIndex * ITEM_HEIGHT,
+                height: ITEM_HEIGHT,
+                width: "100%",
+                borderBottom: "1px solid #ccc",
+                padding: "10px",
+                boxSizing: "border-box",
+                background: "white",
+              }}
+            >
+              <h4>{item.text}</h4>
+              <p>Lorem ipsum dolor sit amet.</p>
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }
+
+export default App;
