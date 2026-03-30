@@ -32,46 +32,48 @@ function App() {
   }, []);
 
   return (
+  <div
+    ref={containerRef}
+    data-testid="scroll-container"
+    onScroll={handleScroll}   // ✅ IMPORTANT FIX
+    style={{
+      height: "500px",
+      overflowY: "auto",
+      border: "1px solid black",
+    }}
+  >
     <div
-      ref={containerRef}
       style={{
-        height: "500px",
-        overflowY: "auto",
-        border: "1px solid black",
+        height: TOTAL_ITEMS * ITEM_HEIGHT,
+        position: "relative",
       }}
     >
-      {/* IMPORTANT: relative container */}
-      <div
-        style={{
-          height: TOTAL_ITEMS * ITEM_HEIGHT,
-          position: "relative",
-        }}
-      >
-        {visibleItems.map((item, index) => {
-          const actualIndex = startIndex + index;
+      {visibleItems.map((item, index) => {
+        const actualIndex = startIndex + index;
 
-          return (
-            <div
-              key={item.id}
-              style={{
-                position: "absolute",
-                top: actualIndex * ITEM_HEIGHT,
-                height: ITEM_HEIGHT,
-                width: "100%",
-                borderBottom: "1px solid #ccc",
-                padding: "10px",
-                boxSizing: "border-box",
-                background: "white",
-              }}
-            >
-              <h4>{item.text}</h4>
-              <p>Lorem ipsum dolor sit amet.</p>
-            </div>
-          );
-        })}
-      </div>
+        return (
+          <div
+            key={item.id}
+            data-testid="list-item"   // ✅ IMPORTANT
+            style={{
+              position: "absolute",
+              top: actualIndex * ITEM_HEIGHT,
+              height: ITEM_HEIGHT,
+              width: "100%",
+              borderBottom: "1px solid #ccc",
+              padding: "10px",
+              boxSizing: "border-box",
+              background: "white",
+            }}
+          >
+            <h4>{item.text}</h4>
+            <p>Lorem ipsum dolor sit amet.</p>
+          </div>
+        );
+      })}
     </div>
-  );
+  </div>
+);
 }
 
 export default App;
